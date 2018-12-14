@@ -1,0 +1,15 @@
+{
+  "name": "spike-mssql",
+  "version": "1.0.0",
+  "description": "explore mssql and pooling",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^6.2.0",
+    "mssql": "^4.3.0",
+    "to-bool": "^0.0.1"
+  },
+  "scripts": {
+    "start": "node ./index.js"
+  }
+}
