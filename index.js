@@ -31,13 +31,34 @@ const update = async () => {
     const newName = uuid().toString().substr(0, 15)
     console.log(`attempting to set pupil 1 forename to ${newName}...`)
     request = new mssql.PreparedStatement(pool)
-    request.input('name', mssql.NVarChar)
+    request.input('name', mssql.VarChar())
     request.input('id', mssql.Int)
     const sql = 'UPDATE mtc_admin.pupil SET foreName=@name WHERE id=@id'
     await request.prepare(sql)
     const result = await request.execute({ name: newName, id: 1 })
     await request.unprepare()
     console.log('update result..')
+    console.dir(result)
+    console.dir(result)
+  } catch (err) {
+    request.unprepare()
+    console.error(err)
+  }
+}
+
+const insert = async () => {
+  let request
+  try {
+    const groupName = uuid().toString().substr(0, 15)
+    request = new mssql.PreparedStatement(pool)
+    request.input('name', mssql.NVarChar)
+    request.input('school_id', mssql.Int)
+    const sql = 'INSERT mtc_admin.[group] (school_id, name) VALUES (@school_id, @name); SELECT SCOPE_IDENTITY()'
+    await request.prepare(sql)
+    console.log(`inserting new group ${groupName}...`)
+    const result = await request.execute({ name: groupName, school_id: 1 })
+    await request.unprepare()
+    console.log('insert result..')
     console.dir(result)
     console.dir(result)
   } catch (err) {
@@ -54,6 +75,7 @@ const main = async () => {
   try {
     await connect()
     await update()
+    await insert()
     await select()
     await cleanup()
   } catch (error) {
