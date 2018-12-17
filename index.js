@@ -1,28 +1,65 @@
 'use strict'
 
-const sql = require('mssql')
-const config = require('./config')
-const sqlConfig = require('./sqlConfig')
+const sqlconfig = require('./sqlconfig')
+const uuid = require('uuid/v4')
+const mssql = require('mssql')
 
-const ex1 = async () => {
+let pool
+
+const connect = async () => {
+  pool = new mssql.ConnectionPool(sqlconfig)
+  pool.on('error', err => {
+    console.error('POOL ERROR:', err)
+  })
+  await pool.connect()
+}
+
+const select = async () => {
   try {
-    await sql.connect(`mssql://${config.Application.Username}:${config.Application.Password}@${config.Server}/${config.Database}`)
-    const result = await sql.query(`select top 5 * from mtc_admin.pupil`)
+    const request = new mssql.Request(pool)
+    const result = await request.query(`select top 2 forename from mtc_admin.pupil`)
+    console.log('select result...')
     console.dir(result)
   } catch (err) {
     console.error(err)
   }
 }
 
-const ex2 = async () => {
+const update = async () => {
+  let request
   try {
-    const pool = await new sql.ConnectionPool(sqlConfig).connect()
-    const req = pool.request()
-    const result = await req.query(`select top 5 * from mtc_admin.pupil`)
+    const newName = uuid().toString().substr(0, 15)
+    console.log(`attempting to set pupil 1 forename to ${newName}...`)
+    request = new mssql.PreparedStatement(pool)
+    request.input('name', mssql.NVarChar)
+    request.input('id', mssql.Int)
+    const sql = 'UPDATE mtc_admin.pupil SET foreName=@name WHERE id=@id'
+    await request.prepare(sql)
+    const result = await request.execute({ name: newName, id: 1 })
+    await request.unprepare()
+    console.log('update result..')
+    console.dir(result)
     console.dir(result)
   } catch (err) {
+    request.unprepare()
     console.error(err)
   }
 }
 
-ex2()
+const cleanup = async () => {
+  await pool.close()
+}
+
+const main = async () => {
+  try {
+    await connect()
+    await update()
+    await select()
+    await cleanup()
+  } catch (error) {
+    console.error('ERROR:', error)
+  }
+  process.exit()
+}
+
+main()
