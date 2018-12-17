@@ -8,12 +8,11 @@ const {
 const mssql = require('mssql')
 const winston = require('winston')
 // winston.level = 'debug'
-
-const sqlPoolService = require('./sql.pool.service')
 const dateService = require('./date.service')
-
+const poolConfig = require('./sqlconfig')
 const moment = require('moment')
 let cache = {}
+let pool
 
 /** Utility functions **/
 
@@ -193,6 +192,14 @@ const sqlService = {}
 // Name of the admin database
 sqlService.adminSchema = '[mtc_admin]'
 
+sqlService.init = async () => {
+  pool = new mssql.ConnectionPool(poolConfig)
+  pool.on('error', err => {
+    winston.error('SQL Pool Error:', err)
+  })
+  await pool.connect()
+}
+
 /**
  * Query data from SQL Server via mssql
  * @param {string} sql - The SELECT statement to execute
@@ -203,7 +210,7 @@ sqlService.query2 = async (sql, params = []) => {
   winston.debug(`sql.service.query(): ${sql}`)
   winston.debug('sql.service.query(): Params ', R.map(R.pick(['name', 'value']), params))
 
-  const request = await sqlPoolService.newRequest()
+  const request = new mssql.Request(pool)
   if (params) {
     for (let index = 0; index < params.length; index++) {
       const param = params[index]
@@ -215,7 +222,7 @@ sqlService.query2 = async (sql, params = []) => {
 }
 
 sqlService.modify3 = async (sql, params = []) => {
-  const ps = await sqlPoolService.newPreparedStatement()
+  const ps = new mssql.PreparedStatement(pool)
   if (params) {
     for (let index = 0; index < params.length; index++) {
       const param = params[index]
@@ -224,7 +231,7 @@ sqlService.modify3 = async (sql, params = []) => {
   }
   console.log('preparing sql')
   await ps.prepare(sql)
-  console.log('mapping values')
+  console.log('mapping values: TODO')
   const paramValues = params.map(p => p.value)
   console.dir(paramValues)
   let result
