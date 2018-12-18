@@ -266,8 +266,9 @@ sqlService.modifyV2 = async (sql, params = []) => {
   let rowCount
   await request.prepare(sql)
   try {
-    rowCount = await request.execute(paramsObject)
+    const theResponse = await request.execute(paramsObject)
     request.unprepare()
+    return theResponse
   } catch (error) {
     request.unprepare()
     throw error
