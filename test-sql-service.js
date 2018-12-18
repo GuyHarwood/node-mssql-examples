@@ -25,14 +25,19 @@ const insert = async () => {
     value: 1
   })
   const sql = 'INSERT mtc_admin.[group] (school_id, name) VALUES (@school_id, @name); SELECT SCOPE_IDENTITY()'
-  const insertResult = sql.modify2(sql)
-  console.log('result of insert...')
-  console.dir(insertResult)
+  try {
+    const insertResult = await sql.modifyV2(sql)
+    console.log('result of insert...')
+    console.dir(insertResult)
+  } catch (error) {
+    console.error('something went wrong with insert...')
+    console.error(error)
+  }
 }
 
 const main = async () => {
   await sql.init()
-  select()
+  // select()
   insert()
 }
 

@@ -227,7 +227,7 @@ sqlService.query2 = async (sql, params = []) => {
  * @param {array} params - Array of parameters for SQL statement
  * @return {Promise}
  */
-sqlService.modify2 = async (sql, params = []) => {
+sqlService.modifyV2 = async (sql, params = []) => {
   winston.debug('sql.service.modify(): SQL: ' + sql)
   winston.debug('sql.service.modify(): Params ', R.map(R.pick(['name', 'value']), params))
 
