@@ -1,12 +1,12 @@
 'use strict'
 
-const sql = require('./sql.service')
+const sqlService = require('./sql.service')
 const T = require('mssql').TYPES
 const Tds = require('tedious').TYPES
 const uuid = require('uuid/v4')
 
 const select = async () => {
-  const selectResult = await sql.query2('SELECT TOP 2 Forename FROM mtc_admin.pupil')
+  const selectResult = await sqlService.query2('SELECT TOP 2 Forename FROM mtc_admin.pupil')
   console.log('result of select...')
   console.dir(selectResult)
 }
@@ -26,7 +26,7 @@ const insert = async () => {
   })
   const sql = 'INSERT mtc_admin.[group] (school_id, name) VALUES (@school_id, @name); SELECT SCOPE_IDENTITY()'
   try {
-    const insertResult = await sql.modifyV2(sql)
+    const insertResult = await sqlService.modifyV2(sql, params)
     console.log('result of insert...')
     console.dir(insertResult)
   } catch (error) {
@@ -36,7 +36,7 @@ const insert = async () => {
 }
 
 const main = async () => {
-  await sql.init()
+  await sqlService.init()
   // select()
   insert()
 }

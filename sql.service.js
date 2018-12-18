@@ -234,6 +234,7 @@ sqlService.modifyV2 = async (sql, params = []) => {
   const request = new mssql.PreparedStatement(pool)
   const isInsert = isInsertStatement(sql)
   const response = {}
+  const paramsObject = {}
 
   if (params) {
     for (let index = 0; index < params.length; index++) {
@@ -254,17 +255,18 @@ sqlService.modifyV2 = async (sql, params = []) => {
         winston.debug('sql.service: modify(): opts to addParameter are: ', opts)
       }
 
-      if (opts) {
+      if (opts.precision) {
         request.input(param.name, param.type(opts.precision, opts.scale))
       } else {
         request.input(param.name, param.type)
       }
+      paramsObject[param.name] = param.value
     }
   }
   let rowCount
   await request.prepare(sql)
   try {
-    rowCount = await request.execute()
+    rowCount = await request.execute(paramsObject)
     request.unprepare()
   } catch (error) {
     request.unprepare()
