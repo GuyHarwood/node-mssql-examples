@@ -126,7 +126,7 @@ const convertMomentToJsDate = (m) => {
  * @param {object} data - keys should be col. names
  * @return {Promise<Array>}
  */
-async function generateParams (tableName, data) {
+async function generateParams(tableName, data) {
   const pairs = R.toPairs(data)
   const params = []
   for (const p of pairs) {
@@ -152,7 +152,7 @@ async function generateParams (tableName, data) {
   return params
 }
 
-function parseResults (results) {
+function parseResults(results) {
   // omit metadata for now, can introduce if useful at later date
   const jsonArray = []
   results.forEach(row => {
@@ -177,7 +177,7 @@ function parseResults (results) {
  * @param sql
  * @return {boolean}
  */
-function isInsertStatement (sql = '') {
+function isInsertStatement(sql = '') {
   const s = sql.replace(/\s/g, '').toUpperCase()
   if (s.slice(0, 6) !== 'INSERT') {
     return false
@@ -221,30 +221,6 @@ sqlService.query2 = async (sql, params = []) => {
   return request.query(sql)
 }
 
-sqlService.modify3 = async (sql, params = []) => {
-  const ps = new mssql.PreparedStatement(pool)
-  if (params) {
-    for (let index = 0; index < params.length; index++) {
-      const param = params[index]
-      ps.input(param.name, param.type)
-    }
-  }
-  console.log('preparing sql')
-  await ps.prepare(sql)
-  console.log('mapping values: TODO')
-  const paramValues = params.map(p => p.value)
-  console.dir(paramValues)
-  let result
-  try {
-    result = await ps.execute(paramValues)
-    ps.unprepare()
-  } catch (error) {
-    ps.unprepare()
-    throw error
-  }
-  return result
-}
-
 /**
  * Modify data in SQL Server via mssql library.
  * @param {string} sql - The INSERT/UPDATE/DELETE statement to execute
@@ -255,12 +231,9 @@ sqlService.modify2 = async (sql, params = []) => {
   winston.debug('sql.service.modify(): SQL: ' + sql)
   winston.debug('sql.service.modify(): Params ', R.map(R.pick(['name', 'value']), params))
 
+  const request = new mssql.PreparedStatement(pool)
   const isInsert = isInsertStatement(sql)
   const response = {}
-  // TODO we need to hook into the stream of returned rows
-  // otherwise some queries will not return expected results
-  const output = []
-  const request = await sqlPoolService.newPreparedStatement()
 
   if (params) {
     for (let index = 0; index < params.length; index++) {
@@ -281,12 +254,11 @@ sqlService.modify2 = async (sql, params = []) => {
         winston.debug('sql.service: modify(): opts to addParameter are: ', opts)
       }
 
-      request.input(
-        param.name,
-        param.type,
-        param.value,
-        opts
-      )
+      if (opts) {
+        request.input(param.name, param.type(opts.precision, opts.scale))
+      } else {
+        request.input(param.name, param.type)
+      }
     }
   }
   let rowCount
